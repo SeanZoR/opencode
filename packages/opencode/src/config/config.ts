@@ -966,6 +966,10 @@ export namespace Config {
             .positive()
             .optional()
             .describe("Timeout in milliseconds for model context protocol (MCP) requests"),
+          browser_tools: z
+            .boolean()
+            .optional()
+            .describe("Enable browser automation tools (requires Chrome extension and native messaging host)"),
         })
         .optional(),
     })

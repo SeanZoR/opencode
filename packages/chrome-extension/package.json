@@ -1,0 +1,10 @@
+{
+  "name": "@opencode-ai/chrome-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenCode Browser Automation Chrome Extension",
+  "scripts": {
+    "build": "echo 'No build needed - extension is vanilla JS'",
+    "typecheck": "echo 'No TypeScript in extension'"
+  }
+}

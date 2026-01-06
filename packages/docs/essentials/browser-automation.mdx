@@ -1,0 +1,186 @@
+---
+title: "Browser Automation"
+description: "Control Chrome browser with AI assistance"
+---
+
+# Browser Automation
+
+OpenCode includes browser automation capabilities through a Chrome extension, allowing AI to navigate websites, interact with elements, and perform tasks directly in your browser.
+
+## Prerequisites
+
+- Google Chrome browser installed
+- OpenCode CLI installed
+
+## Setup
+
+### Step 1: Load the Extension
+
+1. Open Chrome and go to `chrome://extensions`
+2. Enable **Developer mode** (toggle in top-right corner)
+3. Click **Load unpacked**
+4. Select the `packages/chrome-extension` folder from the OpenCode repository
+
+### Step 2: Copy Extension ID
+
+After loading the extension, you'll see an **ID** displayed under the extension. It looks like:
+```
+abcdefghijklmnopqrstuvwxyz123456
+```
+
+Copy this ID - you'll need it for the next step.
+
+### Step 3: Install Native Messaging Host
+
+Run the following command, replacing `YOUR_EXTENSION_ID` with the ID you copied:
+
+```bash
+opencode chrome install YOUR_EXTENSION_ID
+```
+
+This installs the native messaging host that allows Chrome to communicate with OpenCode.
+
+### Step 4: Restart Chrome
+
+Close all Chrome windows completely, then reopen Chrome. This is required for Chrome to recognize the new native messaging host.
+
+### Step 5: Verify Installation
+
+```bash
+opencode chrome status
+```
+
+You should see:
+```
+✓ Native messaging host is installed
+  Host name: com.opencode.browser
+  Extension ID: YOUR_EXTENSION_ID
+```
+
+## Configuration
+
+To enable browser tools, add the following to your `opencode.json`:
+
+```json
+{
+  "experimental": {
+    "browser_tools": true
+  }
+}
+```
+
+## Usage
+
+Once connected and enabled, browser tools will be available during OpenCode sessions. The AI can:
+
+- **Navigate** to URLs and browse websites
+- **Read** page content through accessibility snapshots
+- **Interact** with elements (click, type, scroll)
+- **Fill forms** and submit data
+- **Take screenshots** of web pages
+- **Execute JavaScript** in page context
+- **Monitor** console logs and network requests
+
+### Example Tasks
+
+```bash
+opencode
+> Navigate to github.com and search for opencode
+```
+
+```bash
+> Go to my email, read the latest message, and summarize it
+```
+
+```bash
+> Fill out the contact form on example.com with my information
+```
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `opencode chrome status` | Check extension and host installation status |
+| `opencode chrome install [id]` | Install native messaging host |
+| `opencode chrome uninstall` | Remove native messaging host |
+
+## Troubleshooting
+
+### Extension Not Connecting
+
+1. Make sure Chrome was fully restarted after installation
+2. Click the OpenCode Browser extension icon in Chrome
+3. Check that the extension ID in the manifest matches your extension
+
+### Permission Errors
+
+On macOS/Linux, ensure the native host has execute permissions:
+```bash
+chmod +x ~/.opencode/chrome/native-host
+```
+
+### Manifest Not Found
+
+Verify the manifest exists at the correct location:
+- **macOS**: `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.opencode.browser.json`
+- **Linux**: `~/.config/google-chrome/NativeMessagingHosts/com.opencode.browser.json`
+- **Windows**: Check registry at `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.opencode.browser`
+
+## Security
+
+- The extension only connects to the local native messaging host
+- No data is sent to external servers
+- You maintain full control over which sites the AI can interact with
+- Sensitive actions (like form submissions) should be reviewed before allowing
+
+## Available Tools
+
+When browser tools are enabled, the following tools become available:
+
+| Tool | Description |
+|------|-------------|
+| `browser_navigate` | Navigate a browser tab to a URL |
+| `browser_snapshot` | Get accessibility snapshot of page (DOM tree) |
+| `browser_click` | Click an element using selector or ref |
+| `browser_type` | Type text into an input element |
+| `browser_screenshot` | Capture a screenshot of the visible tab |
+| `browser_tabs` | List, activate, or close browser tabs |
+| `browser_evaluate` | Execute JavaScript in page context |
+| `browser_read_console` | Read console messages from the page |
+| `browser_create_tab` | Create a new browser tab |
+| `browser_close_tab` | Close a browser tab |
+| `browser_get_context` | Get browser context (all tabs, active tab) |
+
+## Architecture
+
+The browser automation works through a multi-layer architecture:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Chrome Browser                           │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │           OpenCode Browser Extension                       │  │
+│  │  • Exposes browser tools via native messaging              │  │
+│  └─────────────────────────┬─────────────────────────────────┘  │
+└────────────────────────────┼────────────────────────────────────┘
+                             │ Native Messaging (stdin/stdout)
+┌────────────────────────────┼────────────────────────────────────┐
+│  ┌─────────────────────────▼─────────────────────────────────┐  │
+│  │           Native Messaging Host                            │  │
+│  │  • HTTP server on localhost:19875                          │  │
+│  │  • Bridges HTTP ↔ Native Messaging                         │  │
+│  └─────────────────────────┬─────────────────────────────────┘  │
+│                            │ HTTP API                            │
+│  ┌─────────────────────────▼─────────────────────────────────┐  │
+│  │                    OpenCode CLI                            │  │
+│  │  • Browser tools available when connected                  │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## Limitations
+
+- Only works with Google Chrome (not Chromium, Brave, Edge, etc.)
+- Browser window must be visible (no headless mode)
+- Some sites with strict bot detection may block automation
+- CAPTCHAs require manual completion
